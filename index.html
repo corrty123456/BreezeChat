@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>極致聊天室</title>
+    <style>
+        /* 全域樣式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft JhengHei', sans-serif;
+        }
+        body, html {
+            height: 100%;
+            background-color: #2f3136;
+            overflow: hidden;
+        }
+        /* 側邊欄 */
+        #sidebar {
+            width: 80px;
+            background-color: #202225;
+            float: left;
+            height: 100%;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        /* 聊天區域 */
+        #chatArea {
+            margin-left: 80px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, #3a3f44 0%, #18191c 100%);
+            animation: backgroundShift 10s ease infinite;
+        }
+        @keyframes backgroundShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        /* 訊息顯示區 */
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            scrollbar-width: thin;
+            scrollbar-color: #5865f2 transparent;
+        }
+        #messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        #messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #messages::-webkit-scrollbar-thumb {
+            background-color: #5865f2;
+            border-radius: 10px;
+        }
+        /* 輸入區 */
+        #inputArea {
+            display: flex;
+            padding: 20px;
+            background-color: #40444b;
+        }
+        #inputArea input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            margin-right: 10px;
+            font-size: 16px;
+            background-color: #32353b;
+            color: #dcddde;
+            outline: none;
+            transition: background 0.3s ease;
+        }
+        #inputArea input:focus {
+            background-color: #3a3d41;
+        }
+        #inputArea input::placeholder {
+            color: #72767d;
+        }
+        #inputArea button {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 5px;
+            background-color: #5865f2;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        #inputArea button:hover {
+            background-color: #4752c4;
+        }
+        /* 訊息樣式 */
+        .message {
+            display: flex;
+            margin-bottom: 20px;
+            align-items: flex-start;
+            animation: messageFadeIn 0.5s ease forwards;
+        }
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+            background-size: cover;
+            flex-shrink: 0;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+        .text {
+            background-color: #42454a;
+            padding: 15px;
+            border-radius: 5px;
+            color: #dcddde;
+            max-width: 60%;
+            word-wrap: break-word;
+            position: relative;
+            animation: textAppear 0.5s ease forwards;
+        }
+        .text::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: -10px;
+            width: 0;
+            height: 0;
+            border-top: 10px solid transparent;
+            border-right: 10px solid #42454a;
+            border-bottom: 10px solid transparent;
+        }
+        /* 使用者名稱 */
+        .username {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        @keyframes messageFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes textAppear {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar"></div>
+    <div id="chatArea">
+        <div id="messages"></div>
+        <div id="inputArea">
+            <input type="text" id="messageInput" placeholder="輸入訊息...">
+            <button id="sendButton">發送</button>
+        </div>
+    </div>
+    <script>
+        var user = JSON.parse(localStorage.getItem('user'));
+        if (!user) {
+            alert('請先登入！');
+            window.location.href = 'login.html';
+        }
+        var messages = JSON.parse(localStorage.getItem('messages')) || [];
+        function displayMessages() {
+            var messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+            messages.forEach(function(msg) {
+                var messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                var avatarDiv = document.createElement('div');
+                avatarDiv.className = 'avatar';
+                avatarDiv.style.backgroundImage = 'url(' + msg.avatar + ')';
+                var textDiv = document.createElement('div');
+                textDiv.className = 'text';
+                var usernameDiv = document.createElement('div');
+                usernameDiv.className = 'username';
+                usernameDiv.textContent = msg.username;
+                var messageContent = document.createElement('div');
+                messageContent.textContent = msg.text;
+                textDiv.appendChild(usernameDiv);
+                textDiv.appendChild(messageContent);
+                messageDiv.appendChild(avatarDiv);
+                messageDiv.appendChild(textDiv);
+                messagesDiv.appendChild(messageDiv);
+            });
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        document.getElementById('sendButton').addEventListener('click', function() {
+            var messageInput = document.getElementById('messageInput');
+            if (messageInput.value.trim() !== '') {
+                var newMessage = {
+                    username: user.username,
+                    avatar: user.avatar,
+                    text: messageInput.value
+                };
+                messages.push(newMessage);
+                localStorage.setItem('messages', JSON.stringify(messages));
+                messageInput.value = '';
+                displayMessages();
+            }
+        });
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('sendButton').click();
+            }
+        });
+        displayMessages();
+    </script>
+</body>
+</html>
